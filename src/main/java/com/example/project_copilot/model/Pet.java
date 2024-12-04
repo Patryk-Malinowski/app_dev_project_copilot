@@ -1,4 +1,3 @@
-
 package com.example.project_copilot.model;
 
 import jakarta.persistence.*;
@@ -27,4 +26,19 @@ public class Pet {
     
     @Column(nullable = false)
     private Integer age;
+
+    @ManyToOne
+    @JoinColumn(name = "household_eircode")
+    private Household household;
+
+    public Pet(Long id, String name, String animalType, String breed, Integer age) {
+        this.id = id;
+        this.name = name;
+        this.animalType = animalType;
+        this.breed = breed;
+        this.age = age;
+    }
+
+    public Household getHousehold() { return household; }
+    public void setHousehold(Household household) { this.household = household; }
 }
