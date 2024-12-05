@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
@@ -43,6 +45,7 @@ public class HouseholdControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getAllHouseholds_ShouldReturnHouseholdsList() throws Exception {
         when(householdService.getAllHouseholds()).thenReturn(Arrays.asList(testHousehold));
 
@@ -52,10 +55,12 @@ public class HouseholdControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createHousehold_ShouldReturnCreatedHousehold() throws Exception {
         when(householdService.createHousehold(any(Household.class))).thenReturn(testHousehold);
 
         mockMvc.perform(post("/api/households")
+                .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(testHousehold)))
                 .andExpect(status().isCreated())
@@ -63,6 +68,7 @@ public class HouseholdControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getHousehold_WhenExists_ShouldReturnHousehold() throws Exception {
         when(householdService.getHouseholdWithPets("D04X4H2")).thenReturn(testHousehold);
 
@@ -72,11 +78,13 @@ public class HouseholdControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = {"USER", "ADMIN"})
     void updateHousehold_ShouldReturnUpdatedHousehold() throws Exception {
         when(householdService.updateHousehold(eq("D04X4H2"), any(Household.class)))
                 .thenReturn(testHousehold);
 
         mockMvc.perform(put("/api/households/D04X4H2")
+                .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(testHousehold)))
                 .andExpect(status().isOk())
@@ -84,14 +92,17 @@ public class HouseholdControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteHousehold_ShouldReturnNoContent() throws Exception {
         doNothing().when(householdService).deleteHousehold("D04X4H2");
 
-        mockMvc.perform(delete("/api/households/D04X4H2"))
+        mockMvc.perform(delete("/api/households/D04X4H2")
+                .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isNoContent());
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createHousehold_WithInvalidData_ShouldReturnBadRequest() throws Exception {
         Household invalidHousehold = new Household();
         invalidHousehold.setEircode(""); // Invalid: empty eircode
@@ -99,6 +110,7 @@ public class HouseholdControllerTest {
         invalidHousehold.setMaxNumberOfOccupants(11); // Invalid: exceeds maximum
 
         mockMvc.perform(post("/api/households")
+                .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidHousehold)))
                 .andExpect(status().isBadRequest());

@@ -1,4 +1,3 @@
-
 package com.example.project_copilot.controller;
 
 import com.example.project_copilot.model.Pet;
@@ -11,6 +10,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -45,6 +46,7 @@ public class PetControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getAllPets_ShouldReturnPetsList() throws Exception {
         when(petService.getAllPets()).thenReturn(Arrays.asList(testPet));
 
@@ -55,10 +57,12 @@ public class PetControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createPet_ShouldReturnCreatedPet() throws Exception {
         when(petService.addPet(any(Pet.class))).thenReturn(testPet);
 
         mockMvc.perform(post("/api/pets")
+                .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(testPet)))
                 .andExpect(status().isCreated())
@@ -66,6 +70,7 @@ public class PetControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getPetById_WhenPetExists_ShouldReturnPet() throws Exception {
         when(petService.getPetById(1L)).thenReturn(testPet);
 
@@ -75,14 +80,17 @@ public class PetControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deletePet_ShouldReturnNoContent() throws Exception {
         doNothing().when(petService).deletePetById(1L);
 
-        mockMvc.perform(delete("/api/pets/1"))
+        mockMvc.perform(delete("/api/pets/1")
+                .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isNoContent());
     }
 
     @Test
+    @WithMockUser(roles = {"USER", "ADMIN"})
     void updatePetName_ShouldReturnUpdatedPet() throws Exception {
         Pet updatedPet = new Pet();
         updatedPet.setId(1L);
@@ -92,6 +100,7 @@ public class PetControllerTest {
         when(petService.updatePet(eq(1L), any(Pet.class))).thenReturn(updatedPet);
 
         mockMvc.perform(patch("/api/pets/1/name")
+                .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"name\":\"UpdatedName\"}"))
                 .andExpect(status().isOk())
