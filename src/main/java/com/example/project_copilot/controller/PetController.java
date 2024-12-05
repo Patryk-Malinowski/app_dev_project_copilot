@@ -6,6 +6,7 @@ import com.example.project_copilot.service.PetService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,17 +36,20 @@ public class PetController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('ADMIN')")
     public Pet createPet(@RequestBody Pet pet) {
         return petService.addPet(pet);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('ADMIN')")
     public void deletePet(@PathVariable Long id) {
         petService.deletePetById(id);
     }
 
     @PatchMapping("/{id}/name")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public Pet updatePetName(@PathVariable Long id, @RequestBody Map<String, String> update) {
         Pet pet = petService.getPetById(id);
         pet.setName(update.get("name"));
@@ -76,6 +80,7 @@ public class PetController {
 
     @DeleteMapping("/name/{name}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('ADMIN')")
     public void deletePetsByName(
             @PathVariable @NotBlank(message = "Name cannot be empty") String name) {
         petService.deletePetsByName(name);
